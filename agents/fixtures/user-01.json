@@ -1,0 +1,40 @@
+{
+  "profile": {
+    "user_id": "00000000-0000-0000-0000-000000000001",
+    "full_name": "Yousef Al-Rashid",
+    "phone": "+49 151 2345 6789",
+    "address": "Hauptstraße 42, 10115 Berlin",
+    "birthdate": "2003-06-14",
+    "german_level": "B1",
+    "target_field": "Fachinformatiker für Anwendungsentwicklung",
+    "bio": "Ich bin 2022 aus Syrien nach Deutschland gekommen. Ich interessiere mich seit der Schule für Computer und habe mir Python und JavaScript selbst beigebracht."
+  },
+  "documents": [
+    {
+      "type": "zeugnis",
+      "extracted_json": {
+        "school": "Abdul Hamid High School, Damaskus",
+        "degree": "Gymnasium-Abschluss (vergleichbar mit Abitur, wissenschaftlicher Zweig)",
+        "year": 2021,
+        "average_grade": "82/100",
+        "strong_subjects": ["Mathematik", "Informatik", "Englisch"]
+      }
+    },
+    {
+      "type": "certificate",
+      "extracted_json": {
+        "name": "telc Deutsch B1",
+        "issuer": "VHS Berlin",
+        "year": 2024
+      }
+    }
+  ],
+  "earliest_start": "2026-09-01",
+  "example_company": {
+    "id": "00000000-0000-0000-0000-0000000000aa",
+    "name": "SAP SE",
+    "email": "ausbildung.de@sap.com",
+    "address": "Dietmar-Hopp-Allee 16, 69190 Walldorf",
+    "ausbildung_types": ["Fachinformatiker", "Kaufmann für Büromanagement"]
+  }
+}
