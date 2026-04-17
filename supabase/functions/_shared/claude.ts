@@ -63,14 +63,18 @@ export async function runClaude(params: RunClaudeParams): Promise<RunClaudeResul
   let lastErr: unknown;
   while (attempt < 3) {
     try {
-      const res = await anthropic.messages.create({
+      const request: Record<string, unknown> = {
         model: params.model,
         max_tokens: maxTokens,
-        temperature: params.temperature ?? 0.4,
         system: systemBlocks,
         tools: params.tools,
         messages: [{ role: "user", content: params.user }],
-      });
+      };
+      // Opus 4.7 rejects `temperature`; set it only on models that accept it.
+      if (!params.model.startsWith("claude-opus-4-7")) {
+        request.temperature = params.temperature ?? 0.4;
+      }
+      const res = await anthropic.messages.create(request as Parameters<typeof anthropic.messages.create>[0]);
 
       const usage = res.usage;
       const price = PRICING[params.model];

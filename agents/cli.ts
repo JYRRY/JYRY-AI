@@ -39,7 +39,7 @@ const AGENT_CONFIG: Record<AgentKey, {
     promptFile: "cv-generator.md",
     model: "claude-sonnet-4-6",
     temperature: 0.3,
-    maxTokens: 2500,
+    maxTokens: 4000,
     cachedContext: (fx) => JSON.stringify({ profile: fx.profile, documents: fx.documents }, null, 2),
     userMessage: () => "Erstelle den tabellarischen Lebenslauf für dieses Profil.",
   },
@@ -114,7 +114,8 @@ function parseArgs(argv: string[]): { agent: AgentKey; fixture: string; extra: R
 }
 
 async function main() {
-  const { agent, fixture, extra } = parseArgs(process.argv.slice(2));
+  const rawArgs = process.argv.slice(2).filter((a) => a !== "--");
+  const { agent, fixture, extra } = parseArgs(rawArgs);
   const cfg = AGENT_CONFIG[agent];
   const prompt = fs.readFileSync(path.join(PROMPTS_DIR, cfg.promptFile), "utf8");
   const fx = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, `${fixture}.json`), "utf8")) as Fixture;
@@ -128,16 +129,18 @@ async function main() {
   console.log(`▶ ${agent} (${cfg.model}) fixture=${fixture}`);
 
   const started = Date.now();
-  const res = await client.messages.create({
+  const request: Record<string, unknown> = {
     model: cfg.model,
     max_tokens: cfg.maxTokens,
-    temperature: cfg.temperature,
     system: [
       { type: "text", text: prompt, cache_control: { type: "ephemeral" } },
       { type: "text", text: cfg.cachedContext(fx), cache_control: { type: "ephemeral" } },
     ],
     messages: [{ role: "user", content: cfg.userMessage(fx, extra) }],
-  });
+  };
+  // Opus 4.7 rejects `temperature`; include only for other models.
+  if (!cfg.model.startsWith("claude-opus-4-7")) request.temperature = cfg.temperature;
+  const res = await client.messages.create(request as Parameters<typeof client.messages.create>[0]);
 
   const text = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n");
   console.log("\n──────── output ────────\n");
