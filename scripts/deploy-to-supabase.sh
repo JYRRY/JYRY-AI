@@ -36,6 +36,9 @@ done
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+echo "── 0. Building prompt bundle ──"
+bash scripts/build-prompts.sh
+
 echo "── 1. Linking to project $PROJECT_REF ──"
 supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
 
