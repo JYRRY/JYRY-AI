@@ -1,0 +1,296 @@
+# Instincts generated from https://github.com/JYRRY/JYRY-AI
+# Generated: 2026-04-17T19:11:40.191Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: JYRY-AI-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/JYRRY/JYRY-AI
+---
+
+# JYRY AI Commit Length
+
+## Action
+
+Keep commit messages concise (~31 characters)
+
+## Evidence
+
+- Average commit message length: 31 chars
+- Based on 2 commits
+
+---
+id: JYRY-AI-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/JYRRY/JYRY-AI
+---
+
+# JYRY AI Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: JYRY-AI-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/JYRRY/JYRY-AI
+---
+
+# JYRY AI Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: JYRY-AI-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/JYRRY/JYRY-AI
+---
+
+# JYRY AI Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: jyry-ai-instinct-file-naming
+trigger: "When creating a new file"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct File Naming
+
+## Action
+
+Name the file using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.files
+
+---
+id: jyry-ai-instinct-function-naming
+trigger: "When defining a function"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Function Naming
+
+## Action
+
+Name the function using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.functions
+
+---
+id: jyry-ai-instinct-class-naming
+trigger: "When defining a class"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Class Naming
+
+## Action
+
+Name the class using PascalCase
+
+## Evidence
+
+- Pattern in namingConventions.classes
+
+---
+id: jyry-ai-instinct-constant-naming
+trigger: "When defining a constant"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Constant Naming
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern in namingConventions.constants
+
+---
+id: jyry-ai-instinct-import-style
+trigger: "When importing modules"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Import Style
+
+## Action
+
+Use mixed import styles as appropriate
+
+## Evidence
+
+- Pattern in importStyle
+
+---
+id: jyry-ai-instinct-export-style
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in exportStyle
+
+---
+id: jyry-ai-instinct-try-catch-errors
+trigger: "When handling errors in code"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Try Catch Errors
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Pattern in errorHandling.style
+
+---
+id: jyry-ai-instinct-no-custom-errors
+trigger: "When considering custom error classes"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct No Custom Errors
+
+## Action
+
+Do not create custom error classes
+
+## Evidence
+
+- Pattern in errorHandling.customErrorClasses
+
+---
+id: jyry-ai-instinct-commit-format-freeform
+trigger: "When writing a git commit message"
+confidence: 0.8
+domain: git
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Commit Format Freeform
+
+## Action
+
+Use a freeform message without a strict prefix
+
+## Evidence
+
+- Pattern in commits.type
+- Examples: 'Fix Opus 4.7 temperature + CLI -- separator', 'Add pnpm-lock.yaml'
+
+---
+id: jyry-ai-instinct-commit-length
+trigger: "When writing a git commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Commit Length
+
+## Action
+
+Keep the message concise (around 30 characters)
+
+## Evidence
+
+- Pattern in commits.averageLength
+
+---
+id: jyry-ai-instinct-test-location
+trigger: "When adding new tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: JYRRY/JYRY-AI
+---
+
+# Jyry Ai Instinct Test Location
+
+## Action
+
+Place tests in a separate directory from source code
+
+## Evidence
+
+- Pattern in architecture.testLocation
+
