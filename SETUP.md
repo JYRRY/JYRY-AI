@@ -1,0 +1,197 @@
+# Setup Guide — Connect Supabase, Agents, and Framer
+
+This guide walks you through **three tasks** end-to-end. Do them in order. Every step tells you exactly where to click and what to copy.
+
+> **You need, in this order:** a Supabase account → a Google Cloud account → a Framer project.
+
+---
+
+## Task 1 — Create Supabase project & set secrets
+
+**Goal:** have a cloud database + Edge Function runtime ready.
+
+### 1.1 Create the project
+
+1. Open https://supabase.com/dashboard → **New Project**.
+2. Fill in:
+   - Name: `jyry-ai`
+   - Database Password: **generate a strong one and save it somewhere** — you will need it twice.
+   - Region: `Frankfurt (eu-central-1)` (closest to German users).
+3. Wait ~2 minutes until it says "Project is ready".
+4. On the project dashboard, copy the **Project Reference ID** from the URL:
+   ```
+   https://supabase.com/dashboard/project/abcdefghijklmnop
+                                            ^^^^^^^^^^^^^^^^ ← this
+   ```
+
+### 1.2 Generate a Supabase access token
+
+1. Go to https://supabase.com/dashboard/account/tokens
+2. Click **Generate new token**, name it `codespaces-deploy`.
+3. Copy the token (starts with `sbp_...`) — you see it only once.
+
+### 1.3 Generate an encryption key for email tokens
+
+In any terminal, run:
+```bash
+openssl rand -base64 32
+```
+Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
+
+### 1.4 Add all secrets to GitHub Codespaces
+
+1. Open https://github.com/settings/codespaces
+2. Scroll to **Codespace secrets** → **New secret** (one per row below):
+
+   | Name                         | Value                                               |
+   |------------------------------|-----------------------------------------------------|
+   | `ANTHROPIC_API_KEY`          | your Anthropic key (`sk-ant-...`)                   |
+   | `OPENAI_API_KEY`             | your OpenAI key (`sk-...`)                          |
+   | `SUPABASE_ACCESS_TOKEN`      | the `sbp_...` from step 1.2                         |
+   | `SUPABASE_DB_PASSWORD`       | the DB password from step 1.1                       |
+   | `EMAIL_TOKEN_ENCRYPTION_KEY` | the base64 string from step 1.3                     |
+
+   For each secret, in **Repository access**, select `JYRRY/JYRY-AI`.
+
+3. **Rebuild your Codespace** so the new secrets load:
+   - In Codespaces, press `Ctrl+Shift+P` → type **Codespaces: Rebuild Container** → Enter.
+
+---
+
+## Task 2 — Deploy the Agents to Supabase (= connect Supabase ↔ Agents)
+
+**Goal:** the 8 Edge Functions live on Supabase and can read/write your new database.
+
+After Task 1 is done and the Codespace rebuilt, open the Codespace terminal and run **one command**:
+
+```bash
+bash scripts/deploy-to-supabase.sh <your-project-ref>
+```
+
+Replace `<your-project-ref>` with the 16-character ID you copied in step 1.1.
+
+The script will:
+1. Link the repo to your Supabase project.
+2. Push the database schema (creates all 11 tables + RLS + triggers).
+3. Seed 10 real Ausbildung companies.
+4. Set all agent secrets (Anthropic, OpenAI, Google, encryption key).
+5. Deploy all 8 Edge Functions.
+6. Print your anon key at the end.
+
+**Test it worked:**
+```bash
+curl -X POST \
+  "https://<your-project-ref>.supabase.co/functions/v1/german-teacher" \
+  -H "Authorization: Bearer <anon-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"free_chat","message":"Hallo"}'
+```
+(This will fail with `invalid jwt` — that's expected, it means the function is live and JWT validation is working. Real requests come from authenticated Framer users.)
+
+---
+
+## Task 3 — Wire Framer to Supabase + Agents
+
+**Goal:** the Framer frontend talks to Supabase Auth, Storage, Realtime, and invokes the Agents.
+
+### 3.1 Get your Supabase public keys
+
+1. Go to https://supabase.com/dashboard/project/<your-project-ref>/settings/api
+2. Copy **two values**:
+   - **Project URL** (e.g. `https://abc...supabase.co`)
+   - **anon public** key (long JWT starting with `eyJ...`)
+
+### 3.2 Add them as Framer Site Variables
+
+1. Open your Framer project.
+2. Top-left menu → **Site Settings** → **Variables** (or the "Environment" tab).
+3. Click **Add variable** twice:
+
+   | Name                            | Value                      | Public? |
+   |---------------------------------|----------------------------|---------|
+   | `NEXT_PUBLIC_SUPABASE_URL`      | the URL from 3.1           | ✅ Yes  |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the anon key from 3.1      | ✅ Yes  |
+
+### 3.3 Paste the Code Components
+
+For each file in `framer/code-components/`, create a matching Code Component in Framer:
+
+1. In Framer, left sidebar → **Assets** → **Code** → **+ New File**.
+2. Name it exactly `useSupabaseAuth.tsx`, paste the contents.
+3. Repeat for:
+   - `framer-client.ts` (shared helper — create this first)
+   - `useSupabaseAuth.tsx`
+   - `WorkflowStepCard.tsx`
+   - `DocumentUploader.tsx`
+   - `ApplicationsList.tsx`
+   - `NotificationBell.tsx`
+
+### 3.4 Enable Google OAuth (needed for Gmail sending)
+
+1. In Supabase dashboard → **Authentication** → **Providers** → **Google** → toggle **Enable**.
+2. You'll see a **redirect URL** — copy it (e.g. `https://<ref>.supabase.co/auth/v1/callback`).
+3. Open https://console.cloud.google.com/apis/credentials → **+ Create Credentials** → **OAuth client ID**:
+   - Application type: **Web application**
+   - Authorized redirect URIs: paste the Supabase callback URL from step 2.
+   - Authorized JavaScript origins: your Framer domain (e.g. `https://jyry.framer.website`).
+4. Copy the **Client ID** and **Client Secret**.
+5. Paste both back into the Supabase Google provider settings.
+6. In **Scopes**, add:
+   ```
+   email profile https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly
+   ```
+7. Save.
+8. In Codespaces, add the same Google creds as Codespaces secrets:
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+9. Re-run `bash scripts/deploy-to-supabase.sh <your-project-ref>` so the Edge Functions get them.
+
+### 3.5 Storage buckets + webhook
+
+In Supabase dashboard → **Storage**:
+
+1. If not already created, click **New Bucket**:
+   - Name: `user-docs` — **Private** — max file size 20 MB.
+   - Name: `generated` — **Private** — max file size 10 MB.
+2. In **Database** → **Webhooks** → **Create a new hook**:
+   - Name: `process-upload-trigger`
+   - Table: `storage.objects`
+   - Events: `Insert`
+   - Type: **Supabase Edge Function** → function = `process-upload`.
+
+Now every time Framer uploads a file, the `process-upload` agent runs automatically.
+
+### 3.6 Schedule the inbox poll
+
+In **SQL Editor**, run:
+```sql
+select cron.schedule(
+  'poll-inbox-15min',
+  '*/15 * * * *',
+  $$ select net.http_post(
+       url := 'https://<your-project-ref>.supabase.co/functions/v1/process-inbox',
+       headers := jsonb_build_object('content-type','application/json')
+     ) $$
+);
+```
+Replace `<your-project-ref>`. This polls user Gmail inboxes every 15 minutes.
+
+---
+
+## You're done
+
+The flow works end-to-end:
+
+1. User signs in via Google in Framer → Supabase Auth stores their Gmail refresh token.
+2. User uploads Zeugnis → Storage webhook → `process-upload` agent extracts fields.
+3. User clicks "Find my Ausbildung" in Framer → `advisor` agent returns matches.
+4. User clicks a company → `generate-cv` + `generate-letter` run → PDFs appear.
+5. User clicks "Send" → `send-application` agent sends the email from their own Gmail.
+6. Every 15 minutes → `process-inbox` agent triages replies → Framer notification updates in real time via Supabase Realtime.
+
+## If something breaks
+
+- **All agent logs**: Supabase dashboard → **Edge Functions** → pick function → **Logs**.
+- **Database queries**: Supabase dashboard → **SQL Editor** → `select * from agent_runs order by created_at desc limit 20;`
+- **Workflow state**: `select * from workflow_steps where user_id = '<user>';`
+- **Cost per run**: `select agent, model, cost_usd from agent_runs order by created_at desc;`

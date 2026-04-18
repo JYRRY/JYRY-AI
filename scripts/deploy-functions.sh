@@ -1,35 +1,25 @@
 #!/usr/bin/env bash
-# Deploy all Edge Functions to the hosted Supabase project.
-# Requires: supabase CLI logged in and linked (`supabase link --project-ref <ref>`).
+# Redeploy just the Edge Functions (keeps DB + secrets as-is).
+# Prereq: already linked via `supabase link --project-ref <ref>`.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-FUNCTIONS=(
-  advisor
-  generate-cv
-  generate-letter
-  send-application
-  process-inbox
-  german-teacher
-  process-upload
-  workflow-advance
-)
+# process-upload = triggered by Storage webhook
+# process-inbox  = triggered by cron
+# Both bypass user JWT verification.
+NO_JWT=(process-upload process-inbox)
+WITH_JWT=(advisor generate-cv generate-letter send-application german-teacher workflow-advance)
 
-echo "Deploying ${#FUNCTIONS[@]} functions..."
-for fn in "${FUNCTIONS[@]}"; do
+for fn in "${WITH_JWT[@]}"; do
   echo "── $fn"
-  supabase functions deploy "$fn" --no-verify-jwt="$([ "$fn" = "process-upload" ] || [ "$fn" = "process-inbox" ] && echo true || echo false)"
+  supabase functions deploy "$fn"
+done
+for fn in "${NO_JWT[@]}"; do
+  echo "── $fn (no-verify-jwt)"
+  supabase functions deploy "$fn" --no-verify-jwt
 done
 
-echo "Setting secrets from .env.local..."
-supabase secrets set --env-file .env.local \
-  ANTHROPIC_API_KEY \
-  OPENAI_API_KEY \
-  GOOGLE_CLIENT_ID \
-  GOOGLE_CLIENT_SECRET \
-  EMAIL_TOKEN_ENCRYPTION_KEY || true
-
-echo "Done."
+echo "✅ Functions deployed."
