@@ -106,25 +106,20 @@ curl -X POST \
    - **Project URL** (e.g. `https://abc...supabase.co`)
    - **anon public** key (long JWT starting with `eyJ...`)
 
-### 3.2 Add them as Framer Site Variables
+### 3.2 Paste the Code Components
 
-1. Open your Framer project.
-2. Top-left menu → **Site Settings** → **Variables** (or the "Environment" tab).
-3. Click **Add variable** twice:
+> Framer does **not** have runtime env vars like Next.js. Instead, you paste the URL + anon key directly into the shared `framer-client` component. Both are public values (safe in a browser bundle), so hardcoding is correct.
 
-   | Name                            | Value                      | Public? |
-   |---------------------------------|----------------------------|---------|
-   | `NEXT_PUBLIC_SUPABASE_URL`      | the URL from 3.1           | ✅ Yes  |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the anon key from 3.1      | ✅ Yes  |
+In Framer, left sidebar → **Assets** → **Code** → **+ New File** — for each file below, create a matching Code Component:
 
-### 3.3 Paste the Code Components
-
-For each file in `framer/code-components/`, create a matching Code Component in Framer:
-
-1. In Framer, left sidebar → **Assets** → **Code** → **+ New File**.
-2. Name it exactly `useSupabaseAuth.tsx`, paste the contents.
-3. Repeat for:
-   - `framer-client.ts` (shared helper — create this first)
+1. **First** create `framer-client.ts` (every other component imports from it):
+   - Paste the contents of `framer/framer-client.ts`.
+   - Replace the two placeholder lines at the top with your real values from 3.1:
+     ```ts
+     const SUPABASE_URL = "https://wuclpdacbgablvtzqmyk.supabase.co";
+     const SUPABASE_ANON_KEY = "eyJhbGciOi...your anon key...";
+     ```
+2. Then create the rest (exact names matter):
    - `useSupabaseAuth.tsx`
    - `WorkflowStepCard.tsx`
    - `DocumentUploader.tsx`

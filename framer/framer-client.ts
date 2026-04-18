@@ -1,11 +1,19 @@
+/**
+ * Shared Supabase client for Framer Code Components.
+ *
+ * IMPORTANT: paste this file as a Framer Code Component named exactly
+ * `framer-client` (before any component that imports from it). Edit the
+ * two constants below with the values from your Supabase dashboard
+ * (Settings → API). Both are PUBLIC — safe to ship in the browser bundle.
+ */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const URL = (import.meta as unknown as { env: Record<string, string> }).env
-  ?.NEXT_PUBLIC_SUPABASE_URL ?? (globalThis as { NEXT_PUBLIC_SUPABASE_URL?: string }).NEXT_PUBLIC_SUPABASE_URL!;
-const ANON = (import.meta as unknown as { env: Record<string, string> }).env
-  ?.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? (globalThis as { NEXT_PUBLIC_SUPABASE_ANON_KEY?: string }).NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// ── Edit these two lines ──────────────────────────────────────────────
+const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+// ──────────────────────────────────────────────────────────────────────
 
-export const supabase: SupabaseClient = createClient(URL, ANON, {
+export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true },
 });
 
