@@ -62,13 +62,16 @@ Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
 
 **Goal:** the 8 Edge Functions live on Supabase and can read/write your new database.
 
-After Task 1 is done and the Codespace rebuilt, open the Codespace terminal and run **one command**:
+> ⚠️ **Copy-paste gotcha:** Never copy angle brackets (`< >`) into the terminal. In bash they mean "redirect input/output", so a command like `… <my-ref>` dies with `syntax error near unexpected token 'newline'`. Always replace the whole `<placeholder>` with a plain value — no brackets.
+
+After Task 1 is done and the Codespace rebuilt, open the Codespace terminal and run these **two commands** (paste them exactly, then change only the value after `=`):
 
 ```bash
-bash scripts/deploy-to-supabase.sh <your-project-ref>
+export PROJECT_REF=paste-your-16-char-id-here
+bash scripts/deploy-to-supabase.sh "$PROJECT_REF"
 ```
 
-Replace `<your-project-ref>` with the 16-character ID you copied in step 1.1.
+Set `PROJECT_REF` to the 16-character ID you copied in step 1.1 — plain letters/numbers only, no `<`, no `>`, no quotes.
 
 The script will:
 1. Link the repo to your Supabase project.
@@ -78,15 +81,17 @@ The script will:
 5. Deploy all 8 Edge Functions.
 6. Print your anon key at the end.
 
-**Test it worked:**
+**Test it worked.** The deploy script printed your anon key at the end — copy it (the long `eyJ...` string) and set it as an env var in the same terminal, then run the curl. No angle brackets anywhere:
+
 ```bash
+export ANON_KEY=paste-the-eyJ-anon-key-here
 curl -X POST \
-  "https://<your-project-ref>.supabase.co/functions/v1/german-teacher" \
-  -H "Authorization: Bearer <anon-key>" \
+  "https://$PROJECT_REF.supabase.co/functions/v1/german-teacher" \
+  -H "Authorization: Bearer $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{"mode":"free_chat","message":"Hallo"}'
 ```
-(This will fail with `invalid jwt` — that's expected, it means the function is live and JWT validation is working. Real requests come from authenticated Framer users.)
+(This will fail with `invalid jwt` — that's expected, it means the function is live and JWT validation is working. Real requests come from authenticated Framer users. If instead you see `Bad hostname`, you copied the `<` or `>` into the URL — remove them.)
 
 ---
 
@@ -96,7 +101,7 @@ curl -X POST \
 
 ### 3.1 Get your Supabase public keys
 
-1. Go to https://supabase.com/dashboard/project/<your-project-ref>/settings/api
+1. Go to `https://supabase.com/dashboard/project/YOUR_PROJECT_REF/settings/api` (paste your real 16-char ref in place of `YOUR_PROJECT_REF` — no angle brackets).
 2. Copy **two values**:
    - **Project URL** (e.g. `https://abc...supabase.co`)
    - **anon public** key (long JWT starting with `eyJ...`)
@@ -129,7 +134,7 @@ For each file in `framer/code-components/`, create a matching Code Component in 
 ### 3.4 Enable Google OAuth (needed for Gmail sending)
 
 1. In Supabase dashboard → **Authentication** → **Providers** → **Google** → toggle **Enable**.
-2. You'll see a **redirect URL** — copy it (e.g. `https://<ref>.supabase.co/auth/v1/callback`).
+2. You'll see a **redirect URL** — copy it (format: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`).
 3. Open https://console.cloud.google.com/apis/credentials → **+ Create Credentials** → **OAuth client ID**:
    - Application type: **Web application**
    - Authorized redirect URIs: paste the Supabase callback URL from step 2.
@@ -144,7 +149,7 @@ For each file in `framer/code-components/`, create a matching Code Component in 
 8. In Codespaces, add the same Google creds as Codespaces secrets:
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
-9. Re-run `bash scripts/deploy-to-supabase.sh <your-project-ref>` so the Edge Functions get them.
+9. Re-run `bash scripts/deploy-to-supabase.sh "$PROJECT_REF"` in the same terminal so the Edge Functions get them. (If you opened a new terminal, run `export PROJECT_REF=paste-your-16-char-id-here` first.)
 
 ### 3.5 Storage buckets + webhook
 
@@ -163,18 +168,18 @@ Now every time Framer uploads a file, the `process-upload` agent runs automatica
 
 ### 3.6 Schedule the inbox poll
 
-In **SQL Editor**, run:
+In **SQL Editor**, paste the block below, then **manually replace `YOUR_PROJECT_REF` with your real 16-char ref** (no angle brackets) before clicking Run:
 ```sql
 select cron.schedule(
   'poll-inbox-15min',
   '*/15 * * * *',
   $$ select net.http_post(
-       url := 'https://<your-project-ref>.supabase.co/functions/v1/process-inbox',
+       url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/process-inbox',
        headers := jsonb_build_object('content-type','application/json')
      ) $$
 );
 ```
-Replace `<your-project-ref>`. This polls user Gmail inboxes every 15 minutes.
+This polls user Gmail inboxes every 15 minutes.
 
 ---
 
@@ -193,5 +198,5 @@ The flow works end-to-end:
 
 - **All agent logs**: Supabase dashboard → **Edge Functions** → pick function → **Logs**.
 - **Database queries**: Supabase dashboard → **SQL Editor** → `select * from agent_runs order by created_at desc limit 20;`
-- **Workflow state**: `select * from workflow_steps where user_id = '<user>';`
+- **Workflow state**: `select * from workflow_steps where user_id = 'paste-user-uuid-here';`
 - **Cost per run**: `select agent, model, cost_usd from agent_runs order by created_at desc;`
