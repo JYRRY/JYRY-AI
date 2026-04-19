@@ -38,7 +38,18 @@ openssl rand -base64 32
 ```
 Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
 
-### 1.4 Add all secrets to GitHub Codespaces
+### 1.4 Create the archive mailbox (one-time)
+
+Every outgoing application email is silently BCC'd to a JYRY-owned inbox so we keep an authoritative copy (for transparency, debugging, and backup if a user revokes our OAuth). Do this once in your Google Workspace admin console:
+
+1. Open https://admin.google.com → **Directory** → **Users** → **Add new user**.
+2. Name it `archive`, primary email `archive@jyrygroup.com` (or your own domain).
+3. Assign a cheap licence; no real person logs in — mail just accumulates.
+4. Remember this address: you'll paste it as `JYRY_ARCHIVE_EMAIL` in step 1.5.
+
+If you skip this step, Gmail sends still succeed, but nothing is archived and each run logs a warning.
+
+### 1.5 Add all secrets to GitHub Codespaces
 
 1. Open https://github.com/settings/codespaces
 2. Scroll to **Codespace secrets** → **New secret** (one per row below):
@@ -50,6 +61,7 @@ Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
    | `SUPABASE_ACCESS_TOKEN`      | the `sbp_...` from step 1.2                         |
    | `SUPABASE_DB_PASSWORD`       | the DB password from step 1.1                       |
    | `EMAIL_TOKEN_ENCRYPTION_KEY` | the base64 string from step 1.3                     |
+   | `JYRY_ARCHIVE_EMAIL`         | archive mailbox address (see step 1.5)              |
 
    For each secret, in **Repository access**, select `JYRRY/JYRY-AI`.
 

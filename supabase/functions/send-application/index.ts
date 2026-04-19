@@ -79,8 +79,19 @@ Deno.serve(async (req) => {
       idempotency_key,
     }).eq("id", application_id);
 
-    await db.from("email_threads").insert({
+    const { data: thread, error: threadErr } = await db.from("email_threads").insert({
       user_id: userId, application_id, gmail_thread_id: sent.threadId, last_message_at: new Date().toISOString(),
+    }).select("id").single();
+    if (threadErr || !thread) throw new Error(`email_threads insert failed: ${threadErr?.message}`);
+
+    await db.from("email_messages").insert({
+      thread_id: thread.id,
+      user_id: userId,
+      gmail_message_id: sent.id,
+      direction: 'out',
+      subject: decision.email_subject,
+      body: decision.email_body,
+      sent_at: new Date().toISOString(),
     });
 
     await advance(db, userId, "send", { application_id, company: app.companies.name });

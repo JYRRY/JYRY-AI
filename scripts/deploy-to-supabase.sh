@@ -14,6 +14,9 @@
 #   GOOGLE_CLIENT_ID
 #   GOOGLE_CLIENT_SECRET
 #   EMAIL_TOKEN_ENCRYPTION_KEY  (run: openssl rand -base64 32)
+#   JYRY_ARCHIVE_EMAIL          — optional; BCC address receiving a copy of every
+#                                 outgoing application (e.g. archive@jyrygroup.com).
+#                                 If unset, sends still work but aren't archived.
 
 set -euo pipefail
 
@@ -55,7 +58,8 @@ supabase secrets set \
   OPENAI_API_KEY="$OPENAI_API_KEY" \
   GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}" \
   GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}" \
-  EMAIL_TOKEN_ENCRYPTION_KEY="${EMAIL_TOKEN_ENCRYPTION_KEY:-$(openssl rand -base64 32)}"
+  EMAIL_TOKEN_ENCRYPTION_KEY="${EMAIL_TOKEN_ENCRYPTION_KEY:-$(openssl rand -base64 32)}" \
+  JYRY_ARCHIVE_EMAIL="${JYRY_ARCHIVE_EMAIL:-}"
 
 echo "── 5. Deploying 8 Edge Functions ──"
 # process-upload and process-inbox are triggered by Storage/cron (no user JWT).
