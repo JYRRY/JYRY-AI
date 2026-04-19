@@ -143,3 +143,65 @@ export function extractJson<T>(text: string): T {
   const raw = match ? match[1] : text;
   return JSON.parse(raw);
 }
+
+type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
+/**
+ * OCR + structured extraction from an image using Claude Haiku vision.
+ * Drop-in replacement for the former GPT-4.1-mini extractFromImage.
+ * Returns parsed JSON matching the schema described in `hint`.
+ */
+export async function extractFromImage(
+  imageBase64: string,
+  mime: string,
+  hint: string,
+  userId: string,
+): Promise<unknown> {
+  const db = serviceClient();
+  const started = Date.now();
+  const model: ClaudeModel = "claude-haiku-4-5-20251001";
+
+  const res = await anthropic.messages.create({
+    model,
+    max_tokens: 1024,
+    messages: [{
+      role: "user",
+      content: [
+        {
+          type: "image",
+          source: { type: "base64", media_type: mime as ImageMediaType, data: imageBase64 },
+        },
+        {
+          type: "text",
+          text:
+            "You extract structured data from German Ausbildung-related documents. " +
+            "Return ONLY valid JSON matching the requested schema. Do not translate names or grades. " +
+            hint,
+        },
+      ],
+    }],
+  });
+
+  const usage = res.usage;
+  const price = PRICING[model];
+  const cost =
+    (usage.input_tokens  / 1_000_000) * price.in +
+    (usage.output_tokens / 1_000_000) * price.out;
+
+  await db.from("agent_runs").insert({
+    user_id:      userId,
+    agent:        "process-upload-vision",
+    model,
+    input_tokens:  usage.input_tokens,
+    output_tokens: usage.output_tokens,
+    cost_usd:      cost.toFixed(6),
+    duration_ms:   Date.now() - started,
+    status:        "ok",
+  });
+
+  const text = res.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("");
+  return JSON.parse(text);
+}

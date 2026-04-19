@@ -1,6 +1,7 @@
 import { json } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
-import { embed, extractFromImage } from "../_shared/openai.ts";
+import { embed } from "../_shared/embeddings.ts";
+import { extractFromImage } from "../_shared/claude.ts";
 import { advance, notify } from "../_shared/workflow.ts";
 
 /**
@@ -35,7 +36,8 @@ Deno.serve(async (req) => {
         b64, mime,
         "Extract all relevant fields from this document. " +
         "Include: institution name, dates, grades, subjects, degree/certificate type. " +
-        "Return JSON with keys: institution, dates, grades (object with subject→grade), degree, notes."
+        "Return JSON with keys: institution, dates, grades (object with subject→grade), degree, notes.",
+        userId,
       );
       embedText = JSON.stringify(extracted);
     } else {
