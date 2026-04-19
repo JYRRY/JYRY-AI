@@ -1,6 +1,5 @@
 import { json } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
-import { embed } from "../_shared/embeddings.ts";
 import { extractFromImage } from "../_shared/claude.ts";
 import { advance, notify } from "../_shared/workflow.ts";
 
@@ -28,7 +27,6 @@ Deno.serve(async (req) => {
     const type = guessDocType(path);
 
     let extracted: unknown = null;
-    let embedText = "";
     if (isImage) {
       const buf = new Uint8Array(await file.arrayBuffer());
       const b64 = btoa(String.fromCharCode(...buf));
@@ -39,14 +37,10 @@ Deno.serve(async (req) => {
         "Return JSON with keys: institution, dates, grades (object with subject→grade), degree, notes.",
         userId,
       );
-      embedText = JSON.stringify(extracted);
     } else {
-      // PDFs: skip OCR for MVP, use filename + type as embed seed.
-      embedText = `Uploaded ${type} document: ${path}`;
       extracted = { note: "pdf awaiting OCR backend" };
     }
 
-    const [vector] = await embed([embedText]);
     const { data: doc } = await db.from("documents").insert({
       user_id: userId,
       type,
@@ -54,7 +48,6 @@ Deno.serve(async (req) => {
       original_name: rec.metadata?.original_name ?? path.split("/").pop(),
       mime_type: mime,
       extracted_json: extracted,
-      embedding: vector,
     }).select("id").single();
 
     // If this is the user's first processed document, advance 'upload'→'process'→'advisor'

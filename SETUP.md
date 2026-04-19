@@ -12,6 +12,8 @@ This guide walks you through **three tasks** end-to-end. Do them in order. Every
 
 ### 1.1 Create the project
 
+> Skip this sub-step if you already have the `jyry-ai` Supabase project.
+
 1. Open https://supabase.com/dashboard → **New Project**.
 2. Fill in:
    - Name: `jyry-ai`
@@ -40,6 +42,8 @@ Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
 
 ### 1.4 Create the archive mailbox (one-time)
 
+> Skip this sub-step if the archive inbox already exists.
+
 Every outgoing application email is silently BCC'd to a JYRY-owned inbox so we keep an authoritative copy (for transparency, debugging, and backup if a user revokes our OAuth). A **free @gmail.com account** is enough — no paid Workspace licence needed, because this inbox only receives mail:
 
 1. Open https://accounts.google.com/signup → create a new Gmail account, e.g. `archive.jyrygroup@gmail.com`.
@@ -57,8 +61,7 @@ If you skip this step entirely, Gmail sends still succeed, but nothing is archiv
 
    | Name                         | Value                                               |
    |------------------------------|-----------------------------------------------------|
-   | `ANTHROPIC_API_KEY`          | your Anthropic key (`sk-ant-...`)                   |
-   | `OPENAI_API_KEY`             | your OpenAI key (`sk-...`) — used **only** for document vector embeddings; all AI agents use Claude |
+   | `ANTHROPIC_API_KEY`          | your Anthropic key (`sk-ant-...`) — powers every agent including OCR (Claude Haiku vision) |
    | `SUPABASE_ACCESS_TOKEN`      | the `sbp_...` from step 1.2                         |
    | `SUPABASE_DB_PASSWORD`       | the DB password from step 1.1                       |
    | `EMAIL_TOKEN_ENCRYPTION_KEY` | the base64 string from step 1.3                     |
@@ -77,6 +80,8 @@ If you skip this step entirely, Gmail sends still succeed, but nothing is archiv
 
 **Goal:** the 8 Edge Functions live on Supabase and can read/write your new database.
 
+> Run this once on first setup, and re-run it after every migration or after rotating any secret. The script is idempotent.
+
 > ⚠️ **Copy-paste gotcha:** Never copy angle brackets (`< >`) into the terminal. In bash they mean "redirect input/output", so a command like `… <my-ref>` dies with `syntax error near unexpected token 'newline'`. Always replace the whole `<placeholder>` with a plain value — no brackets.
 
 After Task 1 is done and the Codespace rebuilt, open the Codespace terminal and run these **two commands** (paste them exactly, then change only the value after `=`):
@@ -92,7 +97,7 @@ The script will:
 1. Link the repo to your Supabase project.
 2. Push the database schema (creates all 11 tables + RLS + triggers).
 3. Seed 10 real Ausbildung companies.
-4. Set all agent secrets (Anthropic, OpenAI, Google, encryption key).
+4. Set all agent secrets (Anthropic, Google, encryption key).
 5. Deploy all 8 Edge Functions.
 6. Print your anon key at the end.
 
@@ -143,23 +148,24 @@ In Framer, left sidebar → **Assets** → **Code** → **+ New File** — for e
 
 ### 3.4 Enable Google OAuth (needed for Gmail sending)
 
-1. In Supabase dashboard → **Authentication** → **Providers** → **Google** → toggle **Enable**.
-2. You'll see a **redirect URL** — copy it (format: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`).
+1. In Supabase dashboard → **Authentication** (left sidebar) → **Providers** → click **Google** to expand → toggle **Enable Sign in with Google**.
+2. You'll see a **Callback URL** — copy it (format: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`).
 3. Open https://console.cloud.google.com/apis/credentials → **+ Create Credentials** → **OAuth client ID**:
    - Application type: **Web application**
    - Authorized redirect URIs: paste the Supabase callback URL from step 2.
    - Authorized JavaScript origins: your Framer domain (e.g. `https://jyry.framer.website`).
 4. Copy the **Client ID** and **Client Secret**.
-5. Paste both back into the Supabase Google provider settings.
-6. In **Scopes**, add:
-   ```
-   email profile https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly
-   ```
-7. Save.
-8. In Codespaces, add the same Google creds as Codespaces secrets:
+5. Back in Supabase → paste them into the two fields on the Google provider page:
+   - `Client ID (for OAuth)` ← paste Client ID here
+   - `Client Secret (for OAuth)` ← paste Secret here
+   - Click **Save**.
+
+   > **Note — Gmail scopes are NOT configured in Supabase.** Supabase's Google provider page has **no Scopes field**. Don't look for it. The Gmail scopes (`gmail.send`, `gmail.readonly`) are requested by the browser at sign-in time via `signInWithOAuth({ options: { scopes: '…' } })` in `framer/code-components/useSupabaseAuth.tsx` — already wired in the repo, you don't have to edit anything. Google will show those extra permissions on the consent screen the first time a user logs in.
+
+6. In Codespaces, add the same Google creds as Codespaces secrets:
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
-9. Re-run `bash scripts/deploy-to-supabase.sh "$PROJECT_REF"` in the same terminal so the Edge Functions get them. (If you opened a new terminal, run `export PROJECT_REF=paste-your-16-char-id-here` first.)
+7. Re-run `bash scripts/deploy-to-supabase.sh "$PROJECT_REF"` in the same terminal so the Edge Functions get them. (If you opened a new terminal, run `export PROJECT_REF=paste-your-16-char-id-here` first.)
 
 ### 3.5 Storage buckets + webhook
 
@@ -193,16 +199,81 @@ This polls user Gmail inboxes every 15 minutes.
 
 ---
 
+## Task 4 — Curate employer lists (the RAG list)
+
+**Goal:** fill the `companies` table with admin-verified Ausbildung employers, one list per Bundesland. When a client on Framer picks a state + specialty, the `advisor` agent filters this table by SQL and asks Claude to rank the shortlist. No vector search, no random matches.
+
+### 4.1 Make one CSV per Bundesland
+
+Open Excel/Google Sheets and create a file like `bayern.csv` with these columns:
+
+```
+name,email,address,website,ausbildung_types,description,bundesland
+```
+
+- `ausbildung_types` is a Postgres `text[]` literal — values separated by commas inside `{ }`, e.g. `{Fachinformatiker,Industriekaufmann}`.
+- If you're preparing the list in Excel with semicolon-joined types in column E, convert to the `{ }` format with this formula in a helper column:
+  ```excel
+  ="{"&SUBSTITUTE(E2,";",",")&"}"
+  ```
+- `bundesland` must match one of: `Baden-Württemberg, Bayern, Berlin, Brandenburg, Bremen, Hamburg, Hessen, Mecklenburg-Vorpommern, Niedersachsen, Nordrhein-Westfalen, Rheinland-Pfalz, Saarland, Sachsen, Sachsen-Anhalt, Schleswig-Holstein, Thüringen` (the CHECK constraint enforces this).
+
+Minimum viable set: ~50 companies per Bundesland × 16 states. Target set: ~1,500 per state. See §5 for where to source them.
+
+### 4.2 Import via Supabase Table editor
+
+1. Supabase dashboard → **Table editor** (left sidebar) → click `companies`.
+2. Click **Insert** ▾ → **Import data from CSV**.
+3. Upload your `bayern.csv`.
+4. Review the column mapping — leave `id` and `created_at` to auto-generate.
+5. Click **Import**. 1,500 rows take ~10 seconds.
+
+Repeat for each state. The `companies_bundesland_idx` and `companies_types_gin` indexes make filtering fast.
+
+### 4.3 Verify
+
+In SQL editor:
+```sql
+select bundesland, count(*) from companies group by 1 order by 1;
+select * from companies where bundesland='Bayern' and 'Fachinformatiker' = any(ausbildung_types) limit 5;
+```
+
+---
+
+## Task 5 — Where to get 1,500+ employers per Bundesland
+
+No scraper lives in this repo — building these CSVs is a one-time human workflow per state. Use these sources, in this order:
+
+| Source | URL | Coverage | Has email? | Cost |
+|---|---|---|---|---|
+| **Bundesagentur für Arbeit Jobsuche API** | https://jobsuche.api.bund.dev | ~80 % of all Ausbildung postings in DE, filterable by Bundesland + Beruf | Sometimes (in `stellenbeschreibung`) | Free, public API |
+| **IHK-Lehrstellenbörse** | https://www.ihk-lehrstellenboerse.de | All IHK-registered employers, per-state portals | Often direct email | Free |
+| **Ausbildung.de** | https://www.ausbildung.de | ~40k employers, state + field filters | Contact form; HR email when listed | Free, no API |
+| **Azubiyo** | https://www.azubiyo.de | ~30k employers | Mixed | Free |
+| **Handwerkskammer (HWK) portals** | per-state, e.g. https://www.hwk-berlin.de | Handwerk employers (Kfz, SHK, Elektro, …) | Listed | Free |
+| **Handelsregister** | https://www.handelsregister.de | Full German company registry; use for verification | No (addresses only) | Free search |
+| **Manual VA on Fiverr / Upwork** | — | Fills the email gap from any of the above | Yes (verified) | ~€0.05–€0.10 / row → €75–€150 per 1,500-row state |
+
+### Recommended workflow to reach ~1,500 per state
+
+1. **Baseline (~800):** Pull Ausbildung postings from the Bundesagentur Jobsuche API. Filter by `arbeitsort.plz` (the PLZ ranges of the target Bundesland) and `angebotsart=4` (Ausbildung). JSON in, CSV out with `kundenname`, `arbeitsort`, `beruf`. One script run.
+2. **IHK top-up (~400):** Open the IHK-Lehrstellenbörse portal for that state, export or copy 300–400 more with direct emails (many entries list them).
+3. **Specialty gaps (~300):** Search Ausbildung.de + the state Handwerkskammer for any Berufe still underrepresented in your list.
+4. **Email enrichment:** Hand the combined spreadsheet to a VA on Fiverr/Upwork with the instruction "verify the ausbildung contact email (format: `ausbildung@…` or HR), drop rows you can't verify". 2–3 days, ~€100.
+5. **Import:** Save as `bundesland-name.csv`, follow §4.2.
+
+---
+
 ## You're done
 
 The flow works end-to-end:
 
-1. User signs in via Google in Framer → Supabase Auth stores their Gmail refresh token.
-2. User uploads Zeugnis → Storage webhook → `process-upload` agent extracts fields.
-3. User clicks "Find my Ausbildung" in Framer → `advisor` agent returns matches.
+1. User signs in via Google in Framer → Supabase Auth stores their Gmail refresh token (scopes granted on the Google consent screen, not in Supabase).
+2. User uploads Zeugnis → Storage webhook → `process-upload` agent extracts fields via Claude Haiku vision.
+3. User picks **Bundesland + specialty** in Framer → `advisor` agent runs a SQL filter on your curated `companies` list → Claude ranks the shortlist with German reasons.
 4. User clicks a company → `generate-cv` + `generate-letter` run → PDFs appear.
-5. User clicks "Send" → `send-application` agent sends the email from their own Gmail.
-6. Every 15 minutes → `process-inbox` agent triages replies → Framer notification updates in real time via Supabase Realtime.
+5. User clicks "Send" → `send-application` agent sends the email from their own Gmail, BCC'd to `JYRY_ARCHIVE_EMAIL`.
+6. Every 15 minutes → `process-inbox` agent triages replies; only real human replies are forwarded to the archive inbox (auto-acknowledgments are skipped). Framer notifications update in real time via Supabase Realtime.
 
 ## If something breaks
 
