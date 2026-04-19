@@ -56,16 +56,35 @@ export interface SendEmailParams {
   bodyText: string;
   attachments?: GmailAttachment[];
   threadId?: string;
+  bcc?: string | null;
 }
 
 export async function sendEmail(p: SendEmailParams): Promise<{ id: string; threadId: string }> {
   const creds = await getCredentials(p.db, p.userId);
   const accessToken = await getAccessToken(creds.refresh_token);
 
+  // BCC resolution: explicit null → skip; undefined → env default; string → use as-is.
+  // This guarantees every outgoing application is archived unless a caller explicitly opts out.
+  let bccAddress: string | null;
+  if (p.bcc === null) {
+    bccAddress = null;
+  } else if (p.bcc === undefined) {
+    const envArchive = Deno.env.get("JYRY_ARCHIVE_EMAIL");
+    if (!envArchive) {
+      console.warn("JYRY_ARCHIVE_EMAIL unset, outgoing email not archived");
+      bccAddress = null;
+    } else {
+      bccAddress = envArchive;
+    }
+  } else {
+    bccAddress = p.bcc;
+  }
+
   const boundary = `====${crypto.randomUUID()}====`;
   const parts: string[] = [];
   parts.push(`From: ${creds.email_address}`);
   parts.push(`To: ${p.to}`);
+  if (bccAddress) parts.push(`Bcc: ${bccAddress}`);
   parts.push(`Subject: ${mimeEncodeHeader(p.subject)}`);
   parts.push(`MIME-Version: 1.0`);
   parts.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);

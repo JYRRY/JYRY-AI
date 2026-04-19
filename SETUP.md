@@ -38,7 +38,18 @@ openssl rand -base64 32
 ```
 Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
 
-### 1.4 Add all secrets to GitHub Codespaces
+### 1.4 Create the archive mailbox (one-time)
+
+Every outgoing application email is silently BCC'd to a JYRY-owned inbox so we keep an authoritative copy (for transparency, debugging, and backup if a user revokes our OAuth). Do this once in your Google Workspace admin console:
+
+1. Open https://admin.google.com → **Directory** → **Users** → **Add new user**.
+2. Name it `archive`, primary email `archive@jyrygroup.com` (or your own domain).
+3. Assign a cheap licence; no real person logs in — mail just accumulates.
+4. Remember this address: you'll paste it as `JYRY_ARCHIVE_EMAIL` in step 1.5.
+
+If you skip this step, Gmail sends still succeed, but nothing is archived and each run logs a warning.
+
+### 1.5 Add all secrets to GitHub Codespaces
 
 1. Open https://github.com/settings/codespaces
 2. Scroll to **Codespace secrets** → **New secret** (one per row below):
@@ -50,6 +61,7 @@ Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
    | `SUPABASE_ACCESS_TOKEN`      | the `sbp_...` from step 1.2                         |
    | `SUPABASE_DB_PASSWORD`       | the DB password from step 1.1                       |
    | `EMAIL_TOKEN_ENCRYPTION_KEY` | the base64 string from step 1.3                     |
+   | `JYRY_ARCHIVE_EMAIL`         | archive mailbox address (see step 1.5)              |
 
    For each secret, in **Repository access**, select `JYRRY/JYRY-AI`.
 
@@ -106,25 +118,20 @@ curl -X POST \
    - **Project URL** (e.g. `https://abc...supabase.co`)
    - **anon public** key (long JWT starting with `eyJ...`)
 
-### 3.2 Add them as Framer Site Variables
+### 3.2 Paste the Code Components
 
-1. Open your Framer project.
-2. Top-left menu → **Site Settings** → **Variables** (or the "Environment" tab).
-3. Click **Add variable** twice:
+> Framer does **not** have runtime env vars like Next.js. Instead, you paste the URL + anon key directly into the shared `framer-client` component. Both are public values (safe in a browser bundle), so hardcoding is correct.
 
-   | Name                            | Value                      | Public? |
-   |---------------------------------|----------------------------|---------|
-   | `NEXT_PUBLIC_SUPABASE_URL`      | the URL from 3.1           | ✅ Yes  |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the anon key from 3.1      | ✅ Yes  |
+In Framer, left sidebar → **Assets** → **Code** → **+ New File** — for each file below, create a matching Code Component:
 
-### 3.3 Paste the Code Components
-
-For each file in `framer/code-components/`, create a matching Code Component in Framer:
-
-1. In Framer, left sidebar → **Assets** → **Code** → **+ New File**.
-2. Name it exactly `useSupabaseAuth.tsx`, paste the contents.
-3. Repeat for:
-   - `framer-client.ts` (shared helper — create this first)
+1. **First** create `framer-client.ts` (every other component imports from it):
+   - Paste the contents of `framer/framer-client.ts`.
+   - Replace the two placeholder lines at the top with your real values from 3.1:
+     ```ts
+     const SUPABASE_URL = "https://wuclpdacbgablvtzqmyk.supabase.co";
+     const SUPABASE_ANON_KEY = "eyJhbGciOi...your anon key...";
+     ```
+2. Then create the rest (exact names matter):
    - `useSupabaseAuth.tsx`
    - `WorkflowStepCard.tsx`
    - `DocumentUploader.tsx`
