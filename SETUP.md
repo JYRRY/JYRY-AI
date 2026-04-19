@@ -58,7 +58,7 @@ If you skip this step entirely, Gmail sends still succeed, but nothing is archiv
    | Name                         | Value                                               |
    |------------------------------|-----------------------------------------------------|
    | `ANTHROPIC_API_KEY`          | your Anthropic key (`sk-ant-...`)                   |
-   | `OPENAI_API_KEY`             | your OpenAI key (`sk-...`)                          |
+   | `OPENAI_API_KEY`             | your OpenAI key (`sk-...`) — used **only** for document vector embeddings; all AI agents use Claude |
    | `SUPABASE_ACCESS_TOKEN`      | the `sbp_...` from step 1.2                         |
    | `SUPABASE_DB_PASSWORD`       | the DB password from step 1.1                       |
    | `EMAIL_TOKEN_ENCRYPTION_KEY` | the base64 string from step 1.3                     |

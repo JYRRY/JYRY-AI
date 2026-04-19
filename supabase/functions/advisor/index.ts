@@ -3,7 +3,7 @@ import { getUserId, serviceClient } from "../_shared/supabase.ts";
 import { runClaude, extractJson } from "../_shared/claude.ts";
 import { loadPrompt } from "../_shared/prompts.ts";
 import { advance, notify } from "../_shared/workflow.ts";
-import { embed } from "../_shared/openai.ts";
+import { embed } from "../_shared/embeddings.ts";
 
 const SYSTEM = loadPrompt("advisor");
 
