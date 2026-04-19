@@ -2,7 +2,7 @@ import { json } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { runClaude, extractJson } from "../_shared/claude.ts";
 import { loadPrompt } from "../_shared/prompts.ts";
-import { listThreadMessages } from "../_shared/gmail.ts";
+import { listThreadMessages, sendEmail } from "../_shared/gmail.ts";
 import { notify } from "../_shared/workflow.ts";
 
 const SYSTEM = loadPrompt("email-triage");
@@ -60,6 +60,33 @@ Deno.serve(async (_req) => {
           last_message_at: new Date(m.date).toISOString(),
           last_checked_at: new Date().toISOString(),
         }).eq("id", t.id);
+
+        // Forward only meaningful human replies to the JYRY archive.
+        // acknowledgment = auto-reply (skip); other = spam/off-topic (skip).
+        const archiveAddr = Deno.env.get("JYRY_ARCHIVE_EMAIL");
+        const humanCategories = ["invitation", "rejection", "info_request", "offer"];
+        if (archiveAddr && humanCategories.includes(triage.category)) {
+          try {
+            const metaHeader =
+              `[JYRY archive forward]\n` +
+              `application_id: ${t.application_id ?? "-"}\n` +
+              `category: ${triage.category}\n` +
+              `summary: ${triage.summary}\n` +
+              `original_from: ${m.from}\n` +
+              `original_date: ${m.date}\n\n` +
+              `--- Original message ---\n\n`;
+            await sendEmail({
+              db,
+              userId: t.user_id,
+              to: archiveAddr,
+              bcc: null,
+              subject: `[JYRY FWD] ${m.subject}`,
+              bodyText: metaHeader + m.body,
+            });
+          } catch (fwdErr) {
+            console.warn(`archive forward failed for ${m.id}: ${(fwdErr as Error).message}`);
+          }
+        }
 
         // Update application status from triage
         const statusMap: Record<string,string> = {
