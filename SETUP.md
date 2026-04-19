@@ -40,14 +40,15 @@ Save the output — it's the `EMAIL_TOKEN_ENCRYPTION_KEY`.
 
 ### 1.4 Create the archive mailbox (one-time)
 
-Every outgoing application email is silently BCC'd to a JYRY-owned inbox so we keep an authoritative copy (for transparency, debugging, and backup if a user revokes our OAuth). Do this once in your Google Workspace admin console:
+Every outgoing application email is silently BCC'd to a JYRY-owned inbox so we keep an authoritative copy (for transparency, debugging, and backup if a user revokes our OAuth). A **free @gmail.com account** is enough — no paid Workspace licence needed, because this inbox only receives mail:
 
-1. Open https://admin.google.com → **Directory** → **Users** → **Add new user**.
-2. Name it `archive`, primary email `archive@jyrygroup.com` (or your own domain).
-3. Assign a cheap licence; no real person logs in — mail just accumulates.
-4. Remember this address: you'll paste it as `JYRY_ARCHIVE_EMAIL` in step 1.5.
+1. Open https://accounts.google.com/signup → create a new Gmail account, e.g. `archive.jyrygroup@gmail.com`.
+2. Nothing else to configure — you'll never log in to send mail, it just accumulates incoming copies.
+3. Remember this address: you'll paste it as `JYRY_ARCHIVE_EMAIL` in step 1.5.
 
-If you skip this step, Gmail sends still succeed, but nothing is archived and each run logs a warning.
+Storage note: a free Gmail account has 15 GB, which fits ~50,000 applications (each ~300 KB with 2 PDFs attached). If you outgrow that, you can upgrade to Google One or switch to a Workspace mailbox later by changing the env var — no code change needed.
+
+If you skip this step entirely, Gmail sends still succeed, but nothing is archived and each run logs a warning.
 
 ### 1.5 Add all secrets to GitHub Codespaces
 
@@ -61,9 +62,11 @@ If you skip this step, Gmail sends still succeed, but nothing is archived and ea
    | `SUPABASE_ACCESS_TOKEN`      | the `sbp_...` from step 1.2                         |
    | `SUPABASE_DB_PASSWORD`       | the DB password from step 1.1                       |
    | `EMAIL_TOKEN_ENCRYPTION_KEY` | the base64 string from step 1.3                     |
-   | `JYRY_ARCHIVE_EMAIL`         | archive mailbox address (see step 1.5)              |
+   | `JYRY_ARCHIVE_EMAIL`         | the full Gmail address from step 1.4 (e.g. `archive.jyrygroup@gmail.com`) |
 
    For each secret, in **Repository access**, select `JYRRY/JYRY-AI`.
+
+   **Why `JYRY_ARCHIVE_EMAIL` is needed as a Codespaces secret:** the deploy script (`scripts/deploy-to-supabase.sh`) reads it from the Codespace shell and pushes it as a Supabase Edge Function secret so `gmail.ts` can inject it into the `Bcc:` header on every outgoing application. Without this secret, the deploy sets it to an empty string and archiving is disabled. The value is just the plain email address — no quotes, no angle brackets.
 
 3. **Rebuild your Codespace** so the new secrets load:
    - In Codespaces, press `Ctrl+Shift+P` → type **Codespaces: Rebuild Container** → Enter.
