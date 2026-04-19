@@ -10,7 +10,6 @@
 #   SUPABASE_ACCESS_TOKEN  — from https://supabase.com/dashboard/account/tokens
 #   SUPABASE_DB_PASSWORD   — the database password you chose when creating the project
 #   ANTHROPIC_API_KEY
-#   OPENAI_API_KEY
 #   GOOGLE_CLIENT_ID
 #   GOOGLE_CLIENT_SECRET
 #   EMAIL_TOKEN_ENCRYPTION_KEY  (run: openssl rand -base64 32)
@@ -28,7 +27,7 @@ if [ -z "$PROJECT_REF" ]; then
   exit 1
 fi
 
-for v in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD ANTHROPIC_API_KEY OPENAI_API_KEY; do
+for v in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD ANTHROPIC_API_KEY; do
   if [ -z "${!v:-}" ]; then
     echo "❌ Missing env var: $v"
     echo "   Add it as a Codespaces secret: https://github.com/settings/codespaces"
@@ -55,7 +54,6 @@ psql "$PGURI" -f supabase/seed.sql || echo "(seed may have already run — conti
 echo "── 4. Setting Edge Function secrets ──"
 supabase secrets set \
   ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-  OPENAI_API_KEY="$OPENAI_API_KEY" \
   GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}" \
   GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}" \
   EMAIL_TOKEN_ENCRYPTION_KEY="${EMAIL_TOKEN_ENCRYPTION_KEY:-$(openssl rand -base64 32)}" \

@@ -7,7 +7,6 @@
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteEnv": {
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
-    "OPENAI_API_KEY":    "${localEnv:OPENAI_API_KEY}",
     "SUPABASE_ACCESS_TOKEN": "${localEnv:SUPABASE_ACCESS_TOKEN}"
   },
   "customizations": {

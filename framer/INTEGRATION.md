@@ -60,7 +60,7 @@ const { data, error } = await supabase.storage
   })
 ```
 
-The `process-upload` Edge Function is wired to the Storage `INSERT` webhook and runs OCR + embedding automatically. The workflow advances on its own — Framer just subscribes to `workflow_steps`.
+The `process-upload` Edge Function is wired to the Storage `INSERT` webhook and runs OCR automatically. The workflow advances on its own — Framer just subscribes to `workflow_steps`.
 
 ## 4. Realtime workflow state
 

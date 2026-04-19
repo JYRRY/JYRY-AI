@@ -24,7 +24,7 @@ Edge Functions run on Deno (not Node). They `import` from URLs (`https://esm.sh/
 ## Architecture
 
 ### Two runtimes, one repo
-- **Node/TS** (`agents/`, `framer/`) — runs locally via `tsx` and inside Framer. Uses the Anthropic and OpenAI SDKs from npm.
+- **Node/TS** (`agents/`, `framer/`) — runs locally via `tsx` and inside Framer. Uses the Anthropic SDK from npm.
 - **Deno** (`supabase/functions/`) — runs in Supabase Edge Runtime. Uses `npm:` / `jsr:` / `https://esm.sh/` imports.
 
 Agents share their **prompts** (`agents/prompts/*.md`) and **schemas** (`agents/schemas/*.ts`) between the two runtimes: Edge Functions read the markdown at cold start via `Deno.readTextFileSync`, and the CLI reads them via `fs`. This keeps one source of truth for prompts while letting both runtimes import them.
@@ -72,7 +72,7 @@ Inbox polling runs as a **Supabase cron job** (`select cron.schedule(...)`) hitt
 Framer is not in this repo. The contract is:
 - **Auth**: `supabase.auth.signInWithOAuth({ provider: 'google', options: { scopes: 'gmail.send gmail.readonly' } })`.
 - **Uploads**: direct-to-Storage from the browser (`supabase.storage.from('user-docs').upload(...)`). The `process-upload` function is triggered by a Storage webhook (configured in `supabase/config.toml`).
-- **Agent invocation**: `supabase.functions.invoke('<agent>', { body: {...} })`. Never call the Anthropic or OpenAI APIs directly from Framer.
+- **Agent invocation**: `supabase.functions.invoke('<agent>', { body: {...} })`. Never call the Anthropic API directly from Framer.
 - **Realtime**: subscribe to `workflow_steps`, `notifications`, and `applications` filtered by `user_id=eq.<uid>`.
 
 See `framer/INTEGRATION.md` for the full wiring and `framer/code-components/` for ready-to-import React components.

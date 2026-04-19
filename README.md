@@ -3,8 +3,8 @@
 AI-powered Ausbildung (German vocational training) platform. Users upload documents; AI agents generate German CVs and Anschreiben, send applications via the user's own Gmail/Outlook, and track replies.
 
 **Stack**
-- **Backend**: Supabase (Postgres + Auth + Storage + Edge Functions + Realtime + pgvector)
-- **AI**: Claude API (writing & reasoning) + OpenAI (embeddings)
+- **Backend**: Supabase (Postgres + Auth + Storage + Edge Functions + Realtime)
+- **AI**: Claude API (all writing, reasoning, and OCR via Haiku vision)
 - **Frontend**: Framer with Supabase JS SDK in Code Components
 - **Email**: Gmail/Outlook OAuth from the user's own account
 
@@ -16,7 +16,7 @@ pnpm install
 
 # 2. Copy env
 cp .env.example .env.local
-# Fill in keys (Anthropic, OpenAI, Google OAuth, Supabase)
+# Fill in keys (Anthropic, Google OAuth, Supabase)
 
 # 3. Start local Supabase
 supabase start
