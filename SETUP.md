@@ -1,35 +1,12 @@
-# Setup Guide — Deploy & Curate Companies
-
-This guide walks you through the final setup steps. You've already completed the initial Supabase/Codespaces/Google OAuth setup — this is the remaining work.
+# Setup Guide — Curate Companies
 
 ---
 
-## Task 1 — Deploy migrations and Edge Functions (after setup completion)
-
-**Goal:** apply the new RAG migrations and redeploy with the latest code.
-
-> Run this **once** after you pull the latest code on `claude/ausbildung-ai-planner`. Rerun only if you add new migrations or modify Edge Function secrets.
-
-In Codespaces:
-
-```bash
-export PROJECT_REF=paste-your-16-char-project-ref-here
-bash scripts/deploy-to-supabase.sh "$PROJECT_REF"
-```
-
-The script will:
-1. Apply all migrations (including `0002_rag_curated_companies.sql` which adds `bundesland` to companies).
-2. Deploy/redeploy all 8 Edge Functions with the latest code.
-
-When done, you'll see your anon key printed.
-
----
-
-## Task 2 — Curate employer lists (the RAG foundation)
+## Task 1 — Curate employer lists (the RAG foundation)
 
 **Goal:** fill the `companies` table with admin-verified Ausbildung employers, one list per Bundesland. When a client on Framer picks a state + specialty, the `advisor` agent filters this table by SQL and asks Claude to rank the shortlist. No vector search, no random matches.
 
-### 2.1 Make one CSV per Bundesland
+### 1.1 Make one CSV per Bundesland
 
 Open Excel/Google Sheets and create a file like `bayern.csv` with these columns:
 
@@ -44,9 +21,9 @@ name,email,address,website,ausbildung_types,description,bundesland
   ```
 - `bundesland` must match one of: `Baden-Württemberg, Bayern, Berlin, Brandenburg, Bremen, Hamburg, Hessen, Mecklenburg-Vorpommern, Niedersachsen, Nordrhein-Westfalen, Rheinland-Pfalz, Saarland, Sachsen, Sachsen-Anhalt, Schleswig-Holstein, Thüringen` (the CHECK constraint enforces this).
 
-Minimum viable set: ~50 companies per Bundesland × 16 states. Target set: ~1,500 per state. See Task 3 for where to source them.
+Minimum viable set: ~50 companies per Bundesland × 16 states. Target set: ~1,500 per state. See Task 2 for where to source them.
 
-### 2.2 Import via Supabase Table editor
+### 1.2 Import via Supabase Table editor
 
 1. Supabase dashboard → **Table editor** (left sidebar) → click `companies`.
 2. Click **Insert** ▾ → **Import data from CSV**.
@@ -56,7 +33,7 @@ Minimum viable set: ~50 companies per Bundesland × 16 states. Target set: ~1,50
 
 Repeat for each state. The `companies_bundesland_idx` and `companies_types_gin` indexes make filtering fast.
 
-### 2.3 Verify
+### 1.3 Verify
 
 In Supabase dashboard → **SQL Editor**, run:
 ```sql
@@ -68,7 +45,7 @@ If both queries return results, you're ready.
 
 ---
 
-## Task 3 — Where to get 1,500+ employers per Bundesland
+## Task 2 — Where to get 1,500+ employers per Bundesland
 
 No scraper lives in this repo — building these CSVs is a one-time human workflow per state. Use these sources, in this order:
 
@@ -88,7 +65,7 @@ No scraper lives in this repo — building these CSVs is a one-time human workfl
 2. **IHK top-up (~400):** Open the IHK-Lehrstellenbörse portal for that state, export or copy 300–400 more with direct emails (many entries list them).
 3. **Specialty gaps (~300):** Search Ausbildung.de + the state Handwerkskammer for any Berufe still underrepresented in your list.
 4. **Email enrichment:** Hand the combined spreadsheet to a VA on Fiverr/Upwork with the instruction "verify the ausbildung contact email (format: `ausbildung@…` or HR), drop rows you can't verify". 2–3 days, ~€100.
-5. **Import:** Save as `bundesland-name.csv`, follow Task 2.2.
+5. **Import:** Save as `bundesland-name.csv`, follow Task 1.2.
 
 ---
 
