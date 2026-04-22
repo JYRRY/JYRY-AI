@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⏳ Pending tasks (remind the user when relevant)
+
+- **Custom domain migration**: User owns `jyrygroup.com` but the project currently uses `jyry.framer.website`. When the user is ready to switch:
+  1. Configure custom domain in Framer dashboard (point `jyrygroup.com` to the Framer site).
+  2. Update Supabase → Authentication → URL Configuration → Redirect URLs: replace/add `https://jyrygroup.com/**`.
+  3. Update Google Cloud Console OAuth credentials → Authorized JavaScript origins + Authorized redirect URIs to use `jyrygroup.com`.
+  4. No code changes required (the anon key + Supabase URL stay the same).
+
 ## What this is
 
 JYRY-AI is a **workflow-based** (not chat) AI platform that helps users land a German Ausbildung. The user uploads documents once; AI agents generate a German Lebenslauf + Anschreiben per company, send applications through the user's own Gmail/Outlook, triage replies, and advance a visible workflow state machine. Frontend lives in Framer; backend and all AI live here.
