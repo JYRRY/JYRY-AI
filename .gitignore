@@ -9,3 +9,6 @@ supabase/.branches/
 *.log
 .vscode/
 .idea/
+
+# MCP config contains secrets — never commit
+.mcp.json
