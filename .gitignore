@@ -12,3 +12,6 @@ supabase/.branches/
 
 # MCP config contains secrets — never commit
 .mcp.json
+
+# Local credential files (Google service account, etc.)
+.secrets/
