@@ -128,3 +128,22 @@ Once the Bayern MVP works end-to-end, repeat steps 1–3 per state at larger sca
 - **Database queries**: Supabase dashboard → **SQL Editor** → `select * from agent_runs order by created_at desc limit 20;`
 - **Workflow state**: `select * from workflow_steps where user_id = 'paste-user-uuid-here';`
 - **Cost per run**: `select agent, model, cost_usd from agent_runs order by created_at desc;`
+
+---
+
+## Connecting Claude Code (MCP)
+
+Claude Code can manage Supabase and Google Sheets directly via MCP servers, so you no longer need to apply schema/data changes manually.
+
+**Files involved (all gitignored):**
+- `.mcp.json` — server definitions and tokens
+- `.secrets/gsheets-sa.json` — Google service account key
+- `.claude/settings.local.json` — per-project tool allowlist (committed-safe; no secrets)
+
+**Rotating credentials:**
+- **Supabase token**: dashboard → Account → Access Tokens → revoke old → generate new → update `SUPABASE_ACCESS_TOKEN` in `.mcp.json` → restart Claude Code.
+- **Google service account**: Google Cloud Console → IAM → Service Accounts → Keys → revoke old, create new JSON, replace `.secrets/gsheets-sa.json`.
+
+**Disabling temporarily:** rename `.mcp.json` to `.mcp.json.disabled` and restart Claude Code.
+
+**Sharing the Sheet:** the service account has its own email (`xxx@yyy.iam.gserviceaccount.com`). It must be added as **Editor** on every sheet you want Claude to modify.
