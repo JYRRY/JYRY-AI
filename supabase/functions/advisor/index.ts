@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     // Admin-curated shortlist: state + (optional) specialty. No vectors.
     let q = db.from("companies")
-      .select("id,name,email,address,website,ausbildung_types,description,bundesland")
+      .select("id,name,email,address,ausbildung_types,bundesland,region")
       .eq("bundesland", bundesland)
       .limit(50);
     if (specialty) q = q.contains("ausbildung_types", [specialty]);
