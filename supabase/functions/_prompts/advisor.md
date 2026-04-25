@@ -10,7 +10,7 @@ The user block contains a JSON object with:
 - `documents` — extracted fields from uploaded Zeugnis, certificates, etc.
 - `bundesland` — the German state the user wants to work in.
 - `specialty` — (optional) the Ausbildung Beruf the user already picked.
-- `candidate_companies` — a pre-filtered shortlist (by Bundesland + specialty) of real employers the admin has curated. Each item has `id`, `name`, `email`, `address`, `website`, `ausbildung_types`, `description`.
+- `candidate_companies` — a pre-filtered shortlist (by Bundesland + specialty) of real employers the admin has curated. Each item has `id`, `name`, `email`, `address`, `ausbildung_types`, `bundesland`, `region` (city/district inside the state — may be null).
 
 ## Your job
 

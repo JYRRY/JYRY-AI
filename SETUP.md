@@ -8,28 +8,30 @@
 
 ### 1.1 Create `bayern.csv` in Google Sheets
 
-Open **Google Sheets** → new sheet → paste this header in row 1:
+Open **Google Sheets** → new sheet → paste this header in row 1 (lowercase, exactly):
 
 ```
-Name,E-Mail,Ausbildungsberufe,Bundesland,Adresse,Beschreibung
+name,email,ausbildung_types,bundesland,region,address
 ```
 
-Only the first four columns are required. `Adresse` and `Beschreibung` can be left empty — the letter still generates, just with a less formal Empfänger block.
+The first four columns are required. `region` and `address` are optional but recommended.
 
 **Per-column rules:**
 
-| Column | Required | Notes |
+| Column | Required | Rule |
 |---|---|---|
-| `Name` | ✅ | Legal company name, e.g. `Siemens AG`. |
-| `E-Mail` | ✅ | Prefer `ausbildung@…` or an HR address. If no verified email, skip the row. |
-| `Ausbildungsberufe` | ✅ | Postgres array literal — see format below. |
-| `Bundesland` | ✅ | Type `Bayern` for every row in this file (the CHECK constraint rejects typos). |
-| `Adresse` | optional | Full street + PLZ + city, e.g. `Werner-von-Siemens-Str. 1, 80333 München`. Used in the Anschreiben Empfänger block. |
-| `Beschreibung` | optional | One-sentence German blurb. Feeds the advisor's ranking context. |
+| `name` | ✅ | Legal company name, e.g. `Siemens AG`. |
+| `email` | ✅ | Prefer `ausbildung@…` or an HR address. If no verified email, skip the row. |
+| `ausbildung_types` | ✅ | Postgres array literal — see format below. |
+| `bundesland` | ✅ | Always the **state name** (`Bayern`). The CHECK constraint rejects anything else. |
+| `region` | optional | City or district inside the state (`München`, `Passau`, `Augsburg`). Stored for future filtering — the advisor ignores it today. |
+| `address` | optional but recommended | Full street + PLZ + city, e.g. `Werner-von-Siemens-Str. 1, 80333 München`. Used in the Anschreiben Empfänger block. |
 
-**`Ausbildungsberufe` format — important:**
+> ⚠️ **The most common import failure:** putting a city (`München`) in the `bundesland` column. Postgres silently stores `null`, then the row fails because `ausbildung_types` is NOT-NULL. **Always write `Bayern` in `bundesland`** — put the city in `region`.
 
-- Type the value **directly into the cell** as: `{Fachinformatiker,Industriekaufmann}`
+**`ausbildung_types` format — important:**
+
+- Type the value **directly into the cell** as: `{Pflegefachmann,Altenpfleger}`
 - Rules:
   - Curly braces `{ }`, not square `[ ]`.
   - No spaces after commas — `{a,b}` ✅, `{a, b}` ❌.
@@ -45,21 +47,10 @@ Only the first four columns are required. `Adresse` and `Beschreibung` can be le
 1. Supabase dashboard → **Table editor** (left sidebar) → click `companies`.
 2. Click **Insert** ▾ → **Import data from CSV**.
 3. Upload `bayern.csv`.
-4. **Map the German headers to the English DB columns** (one-time per file, ~30 seconds):
-
-   | CSV column | DB column |
-   |---|---|
-   | Name | `name` |
-   | E-Mail | `email` |
-   | Ausbildungsberufe | `ausbildung_types` |
-   | Bundesland | `bundesland` |
-   | Adresse | `address` |
-   | Beschreibung | `description` |
-
-   Leave `id` and `created_at` **unmapped** — Postgres generates them.
+4. The headers match DB column names exactly, so the wizard auto-maps them. Leave `id` and `created_at` unmapped — Postgres generates them.
 5. Click **Import**. 50 rows take ~2 seconds.
 
-The `companies_bundesland_idx` and `companies_types_gin` indexes are already in place from migration `0002`, so filtering stays fast as the table grows.
+The `companies_bundesland_idx`, `companies_region_idx`, and `companies_types_gin` indexes are already in place from migrations `0002` and `0003`, so filtering stays fast as the table grows.
 
 ### 1.3 Verify
 
@@ -76,14 +67,14 @@ where bundesland='Bayern' and array_length(ausbildung_types, 1) > 0
 limit 3;
 
 -- 3. The exact filter the advisor will run
-select id, name, email from companies
-where bundesland='Bayern' and 'Fachinformatiker' = any(ausbildung_types)
+select id, name, email, region from companies
+where bundesland='Bayern' and 'Pflegefachmann' = any(ausbildung_types)
 limit 5;
 ```
 
-If query 2 shows `{Fachinformatiker,Industriekaufmann}` (curly braces, no quotes around the whole thing) and query 3 returns rows, you're ready.
+If query 2 shows `{Pflegefachmann,Altenpfleger}` (curly braces, no quotes around the whole thing) and query 3 returns rows, you're ready.
 
-If query 2 shows `"{Fachinformatiker,Industriekaufmann}"` (quoted) or the whole thing as text, the column was mapped wrong in §1.2 — delete the Bayern rows and re-import.
+If query 2 shows `"{Pflegefachmann,Altenpfleger}"` (quoted) or the whole thing as text, the column was mapped wrong in §1.2 — delete the Bayern rows and re-import.
 
 ---
 
