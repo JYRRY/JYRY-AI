@@ -78,7 +78,47 @@ supabase
 
 Same pattern for `notifications` and `applications`.
 
-## 5. Invoke an agent
+## 5. Profile form — required fields
+
+The profile form writes to the `profiles` table via the Supabase client.
+All fields are optional except `full_name`. The `country` field determines
+how the letter-writer formats the Empfänger block (DIN 5008 domestic vs.
+international).
+
+```ts
+await supabase.from("profiles").upsert({
+  user_id: session.user.id,
+  full_name: "...",
+  phone: "...",
+  address: "...",          // single text — e.g. "Hauptstr. 5, 10115 Berlin"
+  country: "Deutschland",  // dropdown value — see list below
+  german_level: "B1",
+  target_field: "Pflegefachmann",
+})
+```
+
+**"Wo wohnst du derzeit?" dropdown** — write the selected value to `profiles.country`:
+
+| Option shown to user | Value stored |
+|---|---|
+| Deutschland | `Deutschland` |
+| Syrien | `Syrien` |
+| Türkei | `Türkei` |
+| Ukraine | `Ukraine` |
+| Irak | `Irak` |
+| Libanon | `Libanon` |
+| Afghanistan | `Afghanistan` |
+| Sonstiges | free-text input (store whatever the user types) |
+
+Default selection: **Deutschland**. Existing profiles without a country value
+are treated as domestic (no "Deutschland" line in letters).
+
+> ⚠️ **Reminder:** add this dropdown to the onboarding form. Without it,
+> applicants from abroad will receive letters missing the "Deutschland" line
+> in the recipient block — which can cause postal delivery issues and looks
+> unprofessional to German HR departments.
+
+## 6. Invoke an agent
 
 ```ts
 // Generate CV after documents are processed
