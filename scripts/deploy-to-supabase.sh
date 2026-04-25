@@ -38,6 +38,15 @@ done
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Supabase CLI v2+ is required for Postgres 17 (major_version = 17 in config.toml).
+# If the system CLI is v1.x, fall back to npx which always fetches the latest v2.
+SUPABASE_MAJOR=$(supabase --version 2>/dev/null | grep -oE '^[0-9]+' || echo 0)
+if [ "$SUPABASE_MAJOR" -lt 2 ]; then
+  echo "ℹ️  System Supabase CLI is v1.x — using npx supabase@2 for this run."
+  supabase() { npx --yes supabase@2 "$@"; }
+  export -f supabase
+fi
+
 echo "── 0. Building prompt bundle ──"
 bash scripts/build-prompts.sh
 
