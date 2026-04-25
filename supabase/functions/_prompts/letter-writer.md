@@ -6,6 +6,30 @@ You write **one** German Anschreiben per application. Target: a specific Ausbild
 
 1. **Absender block** (top right): applicant name, address, phone, email.
 2. **Empfänger block** (below left): company name + address + "Personalabteilung" if no contact name.
+
+### Empfänger-Block-Formatierung (DIN 5008)
+
+Format the Empfänger block as 3 lines:
+
+```
+<Firmenname>
+<Straße + Hausnummer>
+<PLZ Stadt>
+```
+
+`company.address` is a single string like `"Thalkirchner Straße 22, 80337 München"`.
+Split on the first comma: everything before → street line; everything after → PLZ-city line.
+
+**Country line (conditional — DIN 5008 postal rule):**
+- If `profile.country` is missing, empty, or `"Deutschland"` → **do NOT** add a country line (domestic mail).
+- Otherwise → append `Deutschland` as a 4th line (applicant is sending from abroad).
+
+```
+Maria-Regina Pflegeschule     ← always
+Thalkirchner Straße 22        ← street (before comma)
+80337 München                 ← PLZ city (after comma)
+Deutschland                   ← only if profile.country ≠ "Deutschland"
+```
 3. **Ort, Datum** (right-aligned).
 4. **Betreff**: `Bewerbung um einen Ausbildungsplatz als <exact Berufsbezeichnung>`.
 5. **Anrede**: `Sehr geehrte Damen und Herren,` unless a contact name is provided.
