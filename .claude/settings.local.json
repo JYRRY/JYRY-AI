@@ -15,7 +15,8 @@
       "mcp__gsheets__read_sheet",
       "mcp__gsheets__update_cells",
       "mcp__gsheets__append_rows",
-      "mcp__gsheets__create_sheet"
+      "mcp__gsheets__create_sheet",
+      "mcp__gsheets__get_sheet_data"
     ]
   }
 }
