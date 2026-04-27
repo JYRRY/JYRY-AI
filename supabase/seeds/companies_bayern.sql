@@ -54,4 +54,4 @@ INSERT INTO companies (name, email, ausbildung_types, bundesland, region, addres
   ('Klinik Bavaria GmbH & Co. KG', 'info@klinik-bavaria.de', '{Pflegefachmann}', 'Bayern', 'Bad Kissingen', 'Von-der-Tann-Str. 18-22, 97688 Bad Kissingen'),
   ('Senioren- und Pflegeheim Vincentinum München', 'info@vincentinum.de', '{Pflegefachmann}', 'Bayern', 'München', 'Oettingenstraße 16, 80538 München'),
   ('Vitanas Senioren Centrum Am Partnachplatz', 'info@vitanas.de', '{Pflegefachmann}', 'Bayern', 'München', 'Albert-Roßhaupter-Str. 90, 81369 München')
-ON CONFLICT (email) DO NOTHING;
+;
