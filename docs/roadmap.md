@@ -112,73 +112,12 @@
 
 ---
 
-### WEEK 8 — Differentiation Features
-- [ ] Build Interview Prep agent generating role-specific practice questions in German plus Arabic translation
-- [ ] Build Rejection Learning agent extracting reason from rejection replies and improving next letter prompt context
-- [ ] Build Smart Followup that auto-sends a polite check-in 14 days after silence
-- [ ] Build Application Velocity dashboard showing applications per week response rate and time-to-interview
-- [ ] Build Daily Standup notification summarizing yesterday's events and today's recommended actions
-- [ ] Build Document Version Control letting users compare CV revisions across sessions
-- [ ] Build Bilingual Contract Review agent activated when a contract attachment is detected in a reply
-
-**Exit Criteria** All seven differentiation features ship to production and are surfaced in the Framer UI with usage tracking in agent_runs.
-
----
-
-### WEEK 9 — Growth and Acquisition
-- [ ] Ship Landing page in Arabic and German with conversion-optimized hero
-- [ ] Produce a 90-second explainer video demonstrating upload to interview flow
-- [ ] Publish three short-form video case studies featuring beta users with consent
-- [ ] Sign content partnerships with three German language schools in Jordan or Egypt
-- [ ] Implement in-app referral program with reward tiers
-- [ ] Build admin dashboard surfacing aggregate metrics across all users with anonymization
-- [ ] Generate first monthly report covering interviews booked cost per interview and user satisfaction
-
-**Exit Criteria** Landing page launched, three partnership agreements signed, referral program live, and the first public monthly report is published.
-
----
-
-### WEEK 10 — Operational Maturity
-- [ ] Migrate Supabase to a Pro tier project with point-in-time recovery
-- [ ] Set up automated backups of generated Storage bucket weekly to cold archive
-- [ ] Implement rate limiting on send-application keyed per user per day
-- [ ] Build a circuit breaker around Anthropic API to fail gracefully during outages
-- [ ] Document the full runbook covering token rotation cron failures and triage spam
-- [ ] Train a backup operator on the runbook and have them resolve a synthetic incident
-- [ ] Define and publish the SLA covering response time and uptime targets
-
-**Exit Criteria** Operational runbook is exercised end-to-end by a non-author and the system survives one synthetic incident without manual intervention.
-
----
-
-### WEEK 11 — Voice and Multimodal Input
-- [ ] Build voice-recording component letting users tell their story in Arabic
-- [ ] Add Whisper-based transcription via Anthropic-friendly proxy
-- [ ] Feed transcript into generate-cv as additional context for personality-rich Lebenslauf
-- [ ] Build pre-Ausbildung checklist agent generating passport visa health-insurance and accommodation tasks
-- [ ] Surface checklist in Framer with completion tracking
-
-**Exit Criteria** A user with limited writing ability can produce a complete Lebenslauf and Anschreiben using only voice input.
-
----
-
-### WEEK 12 — Long-Term User Value
-- [ ] Build accepted-offer workflow extension covering visa application accommodation booking and arrival prep
-- [ ] Build alumni network feature connecting current applicants with users already in Ausbildung
-- [ ] Build Ausbildung experience review surface anonymously rating employers post-start
-- [ ] Use review data to refine advisor ranking with employer quality signal
-- [ ] Publish first employer quality leaderboard for active Bundesländer
-
-**Exit Criteria** At least 20 users have completed the post-acceptance workflow and the advisor uses real employer quality data in its ranking.
-
----
-
 # PARALLEL TRACK — Operations
 
 ## ONGOING — Data Curation
 - [ ] Audit one Bundesland per week for stale employer data
 - [ ] Investigate every bounced application within 24 hours
-- [ ] Add three new specialties per quarter based on demand signal
+- [ ] Add new specialties based on demand signal from beta users
 
 ## ONGOING — Content Quality
 - [ ] Review one Anschreiben per day from production output and log issues
